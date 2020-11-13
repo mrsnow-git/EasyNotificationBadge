@@ -143,12 +143,16 @@ extension UIView {
         //add horizontal constraint
         self.addConstraint(NSLayoutConstraint(item: badgeLabel, attribute: .centerY, relatedBy: .equal, toItem: self, attribute: .centerY, multiplier: 1.0, constant: centerY))
 
-        badgeLabel.layer.borderColor = appearance.borderColor.cgColor
-        badgeLabel.layer.borderWidth = appearance.borderWidth
-
-        //corner radius
-        badgeLabel.layer.cornerRadius = badgeLabel.frame.size.height / 2
-
+        //corner radius, border color and width
+        var radius: CGFloat
+        if let maybeRadius = appearance.cornerRadius {
+            radius = maybeRadius
+        } else {
+            radius = badgeLabel.frame.size.height / 2
+        }
+        
+        self.makeBorderWithCornerRadius(on: badgeLabel, cornerRadius: radius, borderColor: appearance.borderColor, borderWidth: appearance.borderWidth)
+        
         //setup shadow
         if appearance.allowShadow {
             badgeLabel.layer.shadowOffset = CGSize(width: 1, height: 1)
@@ -215,7 +219,6 @@ extension UIBarButtonItem {
         return holder
     }
 
-    
 }
 
 /*
@@ -229,6 +232,7 @@ extension UIBarButtonItem {
 public struct BadgeAppearance {
     public var font: UIFont
     public var textAlignment: NSTextAlignment
+    public var cornerRadius: CGFloat?
     public var borderColor: UIColor
     public var borderWidth: CGFloat
     public var allowShadow: Bool
@@ -246,6 +250,7 @@ public struct BadgeAppearance {
         textColor = .white
         animate = true
         duration = 0.2
+        cornerRadius = nil
         borderColor = .clear
         borderWidth = 0
         allowShadow = false
@@ -253,4 +258,47 @@ public struct BadgeAppearance {
         distanceFromCenterX = 0
     }
 
+}
+
+protocol CornerRadius {
+    func makeBorderWithCornerRadius(on view: UIView, cornerRadius: CGFloat, borderColor: UIColor, borderWidth: CGFloat)
+}
+
+extension UIView: CornerRadius {
+    
+    func makeBorderWithCornerRadius(on view: UIView, cornerRadius: CGFloat, borderColor: UIColor, borderWidth: CGFloat) {
+        let rect = view.bounds
+        
+        view.layer.sublayers?.removeAll { $0.name == "borderLayer" }
+        
+        let path = UIBezierPath(
+            roundedRect: rect,
+            byRoundingCorners: .allCorners,
+            cornerRadii: CGSize(width: cornerRadius, height: cornerRadius)
+        )
+        
+        let maskLayer = CAShapeLayer()
+        maskLayer.frame = rect
+        maskLayer.path = path.cgPath
+        
+        view.layer.mask = maskLayer
+        
+        let borderPath = UIBezierPath(
+            roundedRect: rect,
+            byRoundingCorners: .allCorners,
+            cornerRadii: CGSize(width: cornerRadius, height: cornerRadius)
+        )
+        
+        let borderLayer = CAShapeLayer()
+        
+        borderLayer.frame = rect
+        borderLayer.path = borderPath.cgPath
+        borderLayer.strokeColor = borderColor.cgColor
+        borderLayer.fillColor = UIColor.clear.cgColor
+        borderLayer.lineWidth = borderWidth
+        borderLayer.name = "borderLayer"
+        
+        view.layer.addSublayer(borderLayer)
+    }
+    
 }
