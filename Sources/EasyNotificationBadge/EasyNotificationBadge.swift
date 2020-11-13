@@ -85,7 +85,7 @@ extension UIView {
         let oldWidth: CGFloat?
         if doesBadgeExist {
             oldWidth = badgeLabel.frame.width
-        }else{
+        } else {
             oldWidth = nil
         }
 
@@ -172,7 +172,7 @@ extension UIView {
                 },
                                completion: nil)
             }
-        }else{
+        } else {
             if appearance.animate, let oldWidth = oldWidth {
                 let currentWidth = badgeLabel.frame.width
                 badgeLabel.frame.size.width = oldWidth
